@@ -68,6 +68,17 @@ static inline int le_test_bit(int nr, const u8 *addr)
 	return 1U & (addr[BIT_BYTE(nr)] >> (nr & (BITS_PER_BYTE-1)));
 }
 
+
+static inline void le_set_bit(int nr, u8 *addr)
+{
+	addr[BIT_BYTE(nr)] |= (1U << (nr & (BITS_PER_BYTE-1)));
+}
+
+static inline void le_clear_bit(int nr, u8 *addr)
+{
+	addr[BIT_BYTE(nr)] &= ~(1U << (nr & (BITS_PER_BYTE-1)));
+}
+
 struct btrfs_fs_info;
 
 struct extent_io_tree {
@@ -175,4 +186,8 @@ int read_data_from_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 			u64 bytes, int mirror);
 int write_data_to_disk(struct btrfs_fs_info *info, void *buf, u64 offset,
 		       u64 bytes, int mirror);
+void extent_buffer_bitmap_clear(struct extent_buffer *eb, unsigned long start,
+                                unsigned long pos, unsigned long len);
+void extent_buffer_bitmap_set(struct extent_buffer *eb, unsigned long start,
+                              unsigned long pos, unsigned long len);
 #endif

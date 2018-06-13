@@ -204,6 +204,45 @@ static int clear_state_bit(struct extent_io_tree *tree,
 	return ret;
 }
 
+/**
+ * extent_buffer_bitmap_set - set an area of a bitmap
+ * @eb: the extent buffer
+ * @start: offset of the bitmap item in the extent buffer
+ * @pos: bit number of the first bit
+ * @len: number of bits to set
+ */
+void extent_buffer_bitmap_set(struct extent_buffer *eb, unsigned long start,
+                              unsigned long pos, unsigned long len)
+{
+        u8 *kaddr = (u8 *)eb->data + start;
+
+        while (len) {
+		le_set_bit(pos, kaddr);
+		pos++;
+		len--;
+        }
+}
+
+
+/**
+ * extent_buffer_bitmap_clear - clear an area of a bitmap
+ * @eb: the extent buffer
+ * @start: offset of the bitmap item in the extent buffer
+ * @pos: bit number of the first bit
+ * @len: number of bits to clear
+ */
+void extent_buffer_bitmap_clear(struct extent_buffer *eb, unsigned long start,
+                                unsigned long pos, unsigned long len)
+{
+        u8 *kaddr = (u8 *)eb->data + start;
+
+        while (len) {
+		le_clear_bit(pos, kaddr);
+		pos++;
+		len--;
+        }
+}
+
 /*
  * clear some bits on a range in the tree.
  */
