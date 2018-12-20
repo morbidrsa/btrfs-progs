@@ -25,25 +25,34 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "ctree.h"
+#include "disk-io.h"
 #include "help.h"
 
 const char * const cmd_inspect_dump_csum_usage[] = {
-	"btrfs inspect-internal dump-csum <path>",
+	"btrfs inspect-internal dump-csum <path> <device>",
 	"Get Checksums for a given file",
 	NULL
 };
 
 int cmd_inspect_dump_csum(int argc, char **argv)
 {
+	struct btrfs_fs_info *info;
 	struct stat sb;
 	char *filename;
 	int ret;
 
-	ret = check_argc_exact(argc, 2);
+	ret = check_argc_exact(argc, 3);
 	if (ret)
 		usage(cmd_inspect_dump_csum_usage);
 
 	filename = argv[1];
+
+	info = open_ctree_fs_info(argv[2], 0, 0, 0, OPEN_CTREE_PARTIAL);
+	if (!info) {
+		fprintf(stderr, "unable to open device %s\n", argv[2]);
+		exit(1);
+	}
 
 	ret = stat(filename, &sb);
 	if (ret) {
