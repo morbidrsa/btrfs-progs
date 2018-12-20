@@ -92,6 +92,7 @@ extern const char * const cmd_rescue_usage[];
 extern const char * const cmd_inspect_dump_super_usage[];
 extern const char * const cmd_inspect_dump_tree_usage[];
 extern const char * const cmd_inspect_tree_stats_usage[];
+extern const char * const cmd_inspect_dump_csum_usage[];
 extern const char * const cmd_filesystem_du_usage[];
 extern const char * const cmd_filesystem_usage_usage[];
 
@@ -108,6 +109,7 @@ int cmd_super_recover(int argc, char **argv);
 int cmd_inspect(int argc, char **argv);
 int cmd_inspect_dump_super(int argc, char **argv);
 int cmd_inspect_dump_tree(int argc, char **argv);
+int cmd_inspect_dump_csum(int argc, char **argv);
 int cmd_inspect_tree_stats(int argc, char **argv);
 int cmd_property(int argc, char **argv);
 int cmd_send(int argc, char **argv);

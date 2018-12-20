@@ -654,6 +654,8 @@ const struct cmd_group inspect_cmd_group = {
 				cmd_inspect_dump_super_usage, NULL, 0 },
 		{ "tree-stats", cmd_inspect_tree_stats,
 				cmd_inspect_tree_stats_usage, NULL, 0 },
+		{ "dump-csum",  cmd_inspect_dump_csum,
+				cmd_inspect_dump_csum_usage, NULL, 0 },
 		NULL_CMD_STRUCT
 	}
 };
