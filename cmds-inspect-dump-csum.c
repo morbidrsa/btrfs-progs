@@ -52,5 +52,10 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 		exit(1);
 	}
 
+	if (sb.st_size < 1024) {
+		fprintf(stderr, "File smaller than 1KB, aborting\n");
+		exit(1);
+	}
+
 	return 0;
 }
