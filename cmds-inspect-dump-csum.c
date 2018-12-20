@@ -27,13 +27,13 @@
 
 #include "help.h"
 
-const char * const cmd_inspect_csum_dump_usage[] = {
-	"btrfs inspect-internal csum-dump <path>",
+const char * const cmd_inspect_dump_csum_usage[] = {
+	"btrfs inspect-internal dump-csum <path>",
 	"Get Checksums for a given file",
 	NULL
 };
 
-int cmd_inspect_csum_dump(int argc, char **argv)
+int cmd_inspect_dump_csum(int argc, char **argv)
 {
 	struct stat sb;
 	char *filename;
@@ -41,7 +41,7 @@ int cmd_inspect_csum_dump(int argc, char **argv)
 
 	ret = check_argc_exact(argc, 2);
 	if (ret)
-		usage(cmd_inspect_csum_dump_usage);
+		usage(cmd_inspect_dump_csum_usage);
 
 	filename = argv[1];
 
