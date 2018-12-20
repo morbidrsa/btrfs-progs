@@ -25,6 +25,8 @@
 #include <unistd.h>
 #include <string.h>
 
+#include "help.h"
+
 const char * const cmd_inspect_csum_dump_usage[] = {
 	"btrfs inspect-internal csum-dump <path>",
 	"Get Checksums for a given file",
@@ -36,6 +38,10 @@ int cmd_inspect_csum_dump(int argc, char **argv)
 	struct stat sb;
 	char *filename;
 	int ret;
+
+	ret = check_argc_exact(argc, 2);
+	if (ret)
+		usage(cmd_inspect_csum_dump_usage);
 
 	filename = argv[1];
 
