@@ -27,7 +27,14 @@
 
 #include "ctree.h"
 #include "disk-io.h"
+#include "volumes.h"
 #include "help.h"
+
+static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
+				 struct btrfs_path *path, long ino)
+{
+	return 0;
+}
 
 const char * const cmd_inspect_dump_csum_usage[] = {
 	"btrfs inspect-internal dump-csum <path> <device>",
@@ -38,6 +45,7 @@ const char * const cmd_inspect_dump_csum_usage[] = {
 int cmd_inspect_dump_csum(int argc, char **argv)
 {
 	struct btrfs_fs_info *info;
+	struct btrfs_path path;
 	struct stat sb;
 	char *filename;
 	int ret;
@@ -66,5 +74,10 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 		exit(1);
 	}
 
-	return 0;
+	btrfs_init_path(&path);
+	ret = btrfs_get_extent_csum(info, &path, sb.st_ino);
+	close_ctree(info->fs_root);
+	btrfs_close_all_devices();
+
+	return ret;
 }
