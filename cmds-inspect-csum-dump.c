@@ -16,7 +16,14 @@
  * Boston, MA 021110-1307, USA.
  */
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #include <stdlib.h>
+#include <stdio.h>
+#include <errno.h>
+#include <unistd.h>
+#include <string.h>
 
 const char * const cmd_inspect_csum_dump_usage[] = {
 	"btrfs inspect-internal csum-dump <path>",
@@ -26,5 +33,18 @@ const char * const cmd_inspect_csum_dump_usage[] = {
 
 int cmd_inspect_csum_dump(int argc, char **argv)
 {
+	struct stat sb;
+	char *filename;
+	int ret;
+
+	filename = argv[1];
+
+	ret = stat(filename, &sb);
+	if (ret) {
+		fprintf(stderr, "Cannot stat %s: %s\n",
+			filename, strerror(errno));
+		exit(1);
+	}
+
 	return 0;
 }
