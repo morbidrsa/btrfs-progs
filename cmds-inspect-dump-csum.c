@@ -134,5 +134,9 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 	close_ctree(info->fs_root);
 	btrfs_close_all_devices();
 
+	if (ret)
+		fprintf(stderr,
+			"Checsum lookup for file %s (%lu) failed\n",
+			filename, sb.st_ino);
 	return ret;
 }
