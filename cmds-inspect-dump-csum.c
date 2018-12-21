@@ -46,8 +46,8 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 	key.offset = 0;
 
 	ret = btrfs_search_slot(NULL, fs_root, &key, path, 0, 0);
-	if (ret) {
-		fprintf(stderr, "No extents found for inode: %lu\n", ino);
+	if (ret < 0) {
+		fprintf(stderr, "No extents found for inode: %lu (%d)\n", ino, ret);
 		goto out;
 	}
 
