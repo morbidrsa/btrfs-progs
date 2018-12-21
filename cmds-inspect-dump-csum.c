@@ -31,7 +31,7 @@
 #include "help.h"
 
 static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
-				 struct btrfs_path *path, long ino)
+				 struct btrfs_path *path, unsigned long ino)
 {
 	return 0;
 }
