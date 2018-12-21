@@ -34,11 +34,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 				 struct btrfs_path *path, unsigned long ino)
 {
 	struct btrfs_root *fs_root = info->fs_root;
-	struct btrfs_file_extent_item *fei;
-	struct extent_buffer *leaf;
-	struct btrfs_key found_key;
 	struct btrfs_key key;
-	int slot;
 	int ret;
 
 	key.objectid = ino;
@@ -47,47 +43,44 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 
 	ret = btrfs_search_slot(NULL, fs_root, &key, path, 0, 0);
 	if (ret < 0) {
-		fprintf(stderr, "No extents found for inode: %lu (%d)\n", ino, ret);
 		goto out;
+	} else if (ret > 0) {
+		if (path->slots[0] == 0) {
+			ret = -ENOENT;
+			goto out;
+		} else {
+			path->slots[0]--;
+		}
 	}
 
 	while (1) {
-		u64 nr_bytes;
-		u64 nr_csums;
-		u64 bytenr;
+		struct btrfs_file_extent_item *fi;
+		struct extent_buffer *leaf;
+		struct btrfs_key found_key;
+		u64 extent_len;
+		int slot;
 
 		leaf = path->nodes[0];
 		slot = path->slots[0];
 
-		if (slot >= btrfs_header_nritems(leaf)) {
-			ret = btrfs_next_leaf(fs_root, path);
-			if (ret == 0)
-				continue;
-			if (ret < 0)
-				goto out;
-		}
-
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
-		if (found_key.type != BTRFS_EXTENT_DATA_KEY) {
-			ret = -EINVAL;
-			goto out;
+		if (found_key.type != BTRFS_EXTENT_DATA_KEY)
+			goto next;
+
+		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
+		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
+
+		printf("%s: extent_len: %llu\n", __func__, extent_len);
+
+next:
+		ret = btrfs_next_item(fs_root, path);
+		if (ret > 0) {
+			ret = 0;
+			break;
 		}
-
-		path->slots[0]++;
-
-		fei = btrfs_item_ptr(leaf, slot,
-				struct btrfs_file_extent_item);
-		bytenr = btrfs_file_extent_disk_bytenr(leaf, fei);
-		nr_bytes = btrfs_file_extent_num_bytes(leaf, fei);
-
-		nr_csums = nr_bytes / 1024 / 4;
-
-		printf("ino: %lu, nr_bytes: %llu, nr_csums: %llu, bytenr: %lld\n",
-		       ino, nr_bytes, nr_csums, bytenr);
 	}
 
 out:
-	btrfs_release_path(path);
 	return ret;
 }
 
@@ -131,6 +124,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 
 	btrfs_init_path(&path);
 	ret = btrfs_get_extent_csum(info, &path, sb.st_ino);
+	btrfs_release_path(&path);
 	close_ctree(info->fs_root);
 	btrfs_close_all_devices();
 
