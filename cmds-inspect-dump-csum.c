@@ -33,7 +33,62 @@
 static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 				 struct btrfs_path *path, unsigned long ino)
 {
-	return 0;
+	struct btrfs_root *fs_root = info->fs_root;
+	struct btrfs_file_extent_item *fei;
+	struct extent_buffer *leaf;
+	struct btrfs_key found_key;
+	struct btrfs_key key;
+	int slot;
+	int ret;
+
+	key.objectid = ino;
+	key.type = BTRFS_EXTENT_DATA_KEY;
+	key.offset = 0;
+
+	ret = btrfs_search_slot(NULL, fs_root, &key, path, 0, 0);
+	if (ret) {
+		fprintf(stderr, "No extents found for inode: %lu\n", ino);
+		goto out;
+	}
+
+	while (1) {
+		u64 nr_bytes;
+		u64 nr_csums;
+		u64 bytenr;
+
+		leaf = path->nodes[0];
+		slot = path->slots[0];
+
+		if (slot >= btrfs_header_nritems(leaf)) {
+			ret = btrfs_next_leaf(fs_root, path);
+			if (ret == 0)
+				continue;
+			if (ret < 0)
+				goto out;
+		}
+
+		btrfs_item_key_to_cpu(leaf, &found_key, slot);
+		if (found_key.type != BTRFS_EXTENT_DATA_KEY) {
+			ret = -EINVAL;
+			goto out;
+		}
+
+		path->slots[0]++;
+
+		fei = btrfs_item_ptr(leaf, slot,
+				struct btrfs_file_extent_item);
+		bytenr = btrfs_file_extent_disk_bytenr(leaf, fei);
+		nr_bytes = btrfs_file_extent_num_bytes(leaf, fei);
+
+		nr_csums = nr_bytes / 1024 / 4;
+
+		printf("ino: %lu, nr_bytes: %llu, nr_csums: %llu, bytenr: %lld\n",
+		       ino, nr_bytes, nr_csums, bytenr);
+	}
+
+out:
+	btrfs_release_path(path);
+	return ret;
 }
 
 const char * const cmd_inspect_dump_csum_usage[] = {
