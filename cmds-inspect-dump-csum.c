@@ -30,6 +30,12 @@
 #include "volumes.h"
 #include "help.h"
 
+static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
+			     u64 bytenr, int total_csums)
+{
+	return 0;
+}
+
 static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 				 struct btrfs_path *path, unsigned long ino)
 {
@@ -55,9 +61,12 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 
 	while (1) {
 		struct btrfs_file_extent_item *fi;
+		struct btrfs_path *csum_path;
 		struct extent_buffer *leaf;
 		struct btrfs_key found_key;
+		int total_csums;
 		u64 extent_len;
+		u64 bytenr;
 		int slot;
 
 		leaf = path->nodes[0];
@@ -69,9 +78,20 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 
 		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
+		bytenr = btrfs_file_extent_num_bytes(leaf, fi);
+		total_csums = extent_len / 1024 / sizeof(u32);
 
 		printf("%s: extent_len: %llu\n", __func__, extent_len);
+		printf("%s: bytenr: %llu\n", __func__, bytenr);
 
+		csum_path = btrfs_alloc_path();
+		ret = btrfs_lookup_csum(info->csum_root, csum_path, bytenr,
+				total_csums);
+		btrfs_release_path(csum_path);
+		if (ret) {
+			fprintf(stderr, "Error looking up checsum\n");
+			break;
+		}
 next:
 		ret = btrfs_next_item(fs_root, path);
 		if (ret > 0) {
