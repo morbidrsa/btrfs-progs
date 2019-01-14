@@ -24,11 +24,13 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
+#include <fcntl.h>
 
 #include "ctree.h"
 #include "disk-io.h"
 #include "volumes.h"
 #include "help.h"
+#include "utils.h"
 
 static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 			     u64 bytenr, int total_csums)
@@ -116,6 +118,8 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 	struct btrfs_path path;
 	struct stat sb;
 	char *filename;
+	u64 rootid;
+	int fd;
 	int ret;
 
 	ret = check_argc_exact(argc, 3);
@@ -142,6 +146,15 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 		exit(1);
 	}
 
+	fd = open(filename, O_RDONLY);
+	ret = lookup_path_rootid(fd, &rootid);
+	if (ret) {
+		fprintf(stderr, "error looking up subvolume for '%s'\n",
+				filename);
+		goto out_close;
+	}
+
+	printf("%s: '%s' is on subvolume %llu\n", __func__, filename, rootid);
 	btrfs_init_path(&path);
 	ret = btrfs_get_extent_csum(info, &path, sb.st_ino);
 	btrfs_release_path(&path);
@@ -152,5 +165,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 		fprintf(stderr,
 			"Checsum lookup for file %s (%lu) failed\n",
 			filename, sb.st_ino);
+out_close:
+	close(fd);
 	return ret;
 }
