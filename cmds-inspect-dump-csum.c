@@ -39,9 +39,9 @@ static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 }
 
 static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
+				 struct btrfs_root *root,
 				 struct btrfs_path *path, unsigned long ino)
 {
-	struct btrfs_root *fs_root = info->fs_root;
 	struct btrfs_key key;
 	int ret;
 
@@ -49,7 +49,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 	key.type = BTRFS_EXTENT_DATA_KEY;
 	key.offset = 0;
 
-	ret = btrfs_search_slot(NULL, fs_root, &key, path, 0, 0);
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
 	if (ret < 0) {
 		goto out;
 	} else if (ret > 0) {
@@ -95,7 +95,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 			break;
 		}
 next:
-		ret = btrfs_next_item(fs_root, path);
+		ret = btrfs_next_item(root, path);
 		if (ret > 0) {
 			ret = 0;
 			break;
@@ -115,6 +115,7 @@ const char * const cmd_inspect_dump_csum_usage[] = {
 int cmd_inspect_dump_csum(int argc, char **argv)
 {
 	struct btrfs_fs_info *info;
+	struct btrfs_root *root;
 	struct btrfs_path path;
 	struct stat sb;
 	char *filename;
@@ -155,8 +156,25 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 	}
 
 	printf("%s: '%s' is on subvolume %llu\n", __func__, filename, rootid);
+
+	root = info->fs_root;
+
+	if (rootid != BTRFS_FS_TREE_OBJECTID) {
+		struct btrfs_key key;
+
+		key.objectid = rootid;
+		key.type = BTRFS_ROOT_ITEM_KEY;
+		key.offset = (u64)-1;
+
+		root = btrfs_read_fs_root(info, &key);
+		if (IS_ERR(root)) {
+			fprintf(stderr, "Unable to read root of subvolume '%llu'\n", rootid);
+			goto out_close;
+		}
+	}
+
 	btrfs_init_path(&path);
-	ret = btrfs_get_extent_csum(info, &path, sb.st_ino);
+	ret = btrfs_get_extent_csum(info, root, &path, sb.st_ino);
 	btrfs_release_path(&path);
 	close_ctree(info->fs_root);
 	btrfs_close_all_devices();
