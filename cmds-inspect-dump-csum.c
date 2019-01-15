@@ -167,7 +167,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 
 		root = btrfs_read_fs_root(info, &key);
 		if (IS_ERR(root)) {
-			error("Unable to read root of subvolume '%llu'\n",
+			error("unable to read root of subvolume '%llu'\n",
 			      rootid);
 			goto out_close;
 		}
@@ -180,7 +180,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 	btrfs_close_all_devices();
 
 	if (ret)
-		error("Checsum lookup for file %s (%lu) failed\n",
+		error("checsum lookup for file %s (%lu) failed\n",
 			filename, sb.st_ino);
 out_close:
 	close(fd);
