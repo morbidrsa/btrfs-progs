@@ -35,6 +35,20 @@
 static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 			     u64 bytenr, int total_csums)
 {
+	struct btrfs_key key;
+	int ret;
+
+	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
+	key.offset = bytenr;
+	key.type = BTRFS_EXTENT_CSUM_KEY;
+
+	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
+	if (ret < 0)
+		goto fail;
+
+fail:
+	error("failed to lookup checksums for extent at %llu", bytenr);
+
 	return 0;
 }
 
