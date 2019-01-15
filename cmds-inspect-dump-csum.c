@@ -61,6 +61,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 		}
 	}
 
+	ret = -EINVAL;
 	while (1) {
 		struct btrfs_file_extent_item *fi;
 		struct btrfs_path *csum_path;
@@ -76,7 +77,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 
 		btrfs_item_key_to_cpu(leaf, &found_key, slot);
 		if (found_key.type != BTRFS_EXTENT_DATA_KEY)
-			goto next;
+			goto out;
 
 		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
@@ -94,7 +95,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 			error("Error looking up checsum\n");
 			break;
 		}
-next:
+
 		ret = btrfs_next_item(root, path);
 		if (ret > 0) {
 			ret = 0;
