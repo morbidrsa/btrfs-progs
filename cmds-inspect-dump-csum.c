@@ -91,7 +91,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 				total_csums);
 		btrfs_release_path(csum_path);
 		if (ret) {
-			fprintf(stderr, "Error looking up checsum\n");
+			error("Error looking up checsum\n");
 			break;
 		}
 next:
@@ -131,26 +131,25 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 
 	info = open_ctree_fs_info(argv[2], 0, 0, 0, OPEN_CTREE_PARTIAL);
 	if (!info) {
-		fprintf(stderr, "unable to open device %s\n", argv[2]);
+		error("unable to open device %s\n", argv[2]);
 		exit(1);
 	}
 
 	ret = stat(filename, &sb);
 	if (ret) {
-		fprintf(stderr, "Cannot stat %s: %s\n",
-			filename, strerror(errno));
+		error("Cannot stat %s: %s\n", filename, strerror(errno));
 		exit(1);
 	}
 
 	if (sb.st_size < 1024) {
-		fprintf(stderr, "File smaller than 1KB, aborting\n");
+		error("File smaller than 1KB, aborting\n");
 		exit(1);
 	}
 
 	fd = open(filename, O_RDONLY);
 	ret = lookup_path_rootid(fd, &rootid);
 	if (ret) {
-		fprintf(stderr, "error looking up subvolume for '%s'\n",
+		error("error looking up subvolume for '%s'\n",
 				filename);
 		goto out_close;
 	}
@@ -168,7 +167,8 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 
 		root = btrfs_read_fs_root(info, &key);
 		if (IS_ERR(root)) {
-			fprintf(stderr, "Unable to read root of subvolume '%llu'\n", rootid);
+			error("Unable to read root of subvolume '%llu'\n",
+			      rootid);
 			goto out_close;
 		}
 	}
@@ -180,8 +180,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 	btrfs_close_all_devices();
 
 	if (ret)
-		fprintf(stderr,
-			"Checsum lookup for file %s (%lu) failed\n",
+		error("Checsum lookup for file %s (%lu) failed\n",
 			filename, sb.st_ino);
 out_close:
 	close(fd);
