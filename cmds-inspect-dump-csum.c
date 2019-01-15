@@ -42,6 +42,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 				 struct btrfs_root *root,
 				 struct btrfs_path *path, unsigned long ino)
 {
+	u16 csum_size = btrfs_super_csum_size(info->super_copy);
 	struct btrfs_key key;
 	int ret;
 
@@ -82,7 +83,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
 		bytenr = btrfs_file_extent_num_bytes(leaf, fi);
-		total_csums = extent_len / 1024 / sizeof(u32);
+		total_csums = extent_len / 1024 / csum_size;
 
 		printf("%s: extent_len: %llu\n", __func__, extent_len);
 		printf("%s: bytenr: %llu\n", __func__, bytenr);
