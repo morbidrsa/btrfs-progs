@@ -104,7 +104,7 @@ static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
 
 		csum_path = btrfs_alloc_path();
 		ret = btrfs_lookup_csum(info->csum_root, csum_path, bytenr,
-				total_csums);
+					total_csums);
 		btrfs_release_path(csum_path);
 		if (ret) {
 			error("Error looking up checsum\n");
