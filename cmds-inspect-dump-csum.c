@@ -52,13 +52,15 @@ fail:
 	return 0;
 }
 
-static int btrfs_get_extent_csum(struct btrfs_fs_info *info,
-				 struct btrfs_root *root,
+static int btrfs_get_extent_csum(struct btrfs_root *root,
 				 struct btrfs_path *path, unsigned long ino)
 {
-	u16 csum_size = btrfs_super_csum_size(info->super_copy);
+	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_key key;
+	u16 csum_size;
 	int ret;
+
+	csum_size = btrfs_super_csum_size(info->super_copy);
 
 	key.objectid = ino;
 	key.type = BTRFS_EXTENT_DATA_KEY;
@@ -190,7 +192,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 	}
 
 	btrfs_init_path(&path);
-	ret = btrfs_get_extent_csum(info, root, &path, sb.st_ino);
+	ret = btrfs_get_extent_csum(root, &path, sb.st_ino);
 	btrfs_release_path(&path);
 	close_ctree(info->fs_root);
 	btrfs_close_all_devices();
