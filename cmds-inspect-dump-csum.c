@@ -153,12 +153,12 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 
 	ret = stat(filename, &sb);
 	if (ret) {
-		error("Cannot stat %s: %s\n", filename, strerror(errno));
+		error("cannot stat %s: %s\n", filename, strerror(errno));
 		exit(1);
 	}
 
 	if (sb.st_size < 1024) {
-		error("File smaller than 1KB, aborting\n");
+		error("file smaller than 1KB, aborting\n");
 		exit(1);
 	}
 
