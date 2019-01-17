@@ -98,7 +98,7 @@ static int btrfs_get_extent_csum(struct btrfs_root *root,
 
 		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
-		bytenr = btrfs_file_extent_num_bytes(leaf, fi);
+		bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
 		total_csums = extent_len / 1024 / csum_size;
 
 		printf("%s: extent_len: %llu\n", __func__, extent_len);
