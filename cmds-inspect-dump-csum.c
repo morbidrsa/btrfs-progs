@@ -32,6 +32,14 @@
 #include "help.h"
 #include "utils.h"
 
+#define DEBUG 1
+
+#ifdef DEBUG
+#define pr_debug(fmt, ...) printf(fmt, __VA_ARGS__)
+#else
+#define pr_debug(fmt, ...) do {} while (0)
+#endif
+
 static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 			     u64 bytenr, int total_csums)
 {
@@ -101,9 +109,8 @@ static int btrfs_get_extent_csum(struct btrfs_root *root,
 		bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
 		total_csums = extent_len / 4096;
 
-		printf("%s: extent_len: %llu\n", __func__, extent_len);
-		printf("%s: bytenr: %llu\n", __func__, bytenr);
-		printf("%s: total_csums: %d\n", __func__, total_csums);
+		pr_debug("%s: extent_len: %llu\n", __func__, extent_len);
+		pr_debug("%s: bytenr: %llu\n", __func__, bytenr);
 
 		csum_path = btrfs_alloc_path();
 		ret = btrfs_lookup_csum(info->csum_root, csum_path, bytenr,
@@ -173,7 +180,7 @@ int cmd_inspect_dump_csum(int argc, char **argv)
 		goto out_close;
 	}
 
-	printf("%s: '%s' is on subvolume %llu\n", __func__, filename, rootid);
+	pr_debug("%s: '%s' is on subvolume %llu\n", __func__, filename, rootid);
 
 	root = info->fs_root;
 
