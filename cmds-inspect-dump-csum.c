@@ -41,7 +41,7 @@
 #endif
 
 static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
-			     u64 bytenr, int total_csums)
+			     u64 bytenr, u64 extent_len)
 {
 	struct btrfs_key key;
 	int ret;
@@ -92,7 +92,6 @@ static int btrfs_get_extent_csum(struct btrfs_root *root,
 		struct btrfs_path *csum_path;
 		struct extent_buffer *leaf;
 		struct btrfs_key found_key;
-		int total_csums;
 		u64 extent_len;
 		u64 bytenr;
 		int slot;
@@ -107,14 +106,13 @@ static int btrfs_get_extent_csum(struct btrfs_root *root,
 		fi = btrfs_item_ptr(leaf, slot, struct btrfs_file_extent_item);
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
 		bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
-		total_csums = extent_len / 4096;
 
 		pr_debug("%s: extent_len: %llu\n", __func__, extent_len);
 		pr_debug("%s: bytenr: %llu\n", __func__, bytenr);
 
 		csum_path = btrfs_alloc_path();
 		ret = btrfs_lookup_csum(info->csum_root, csum_path, bytenr,
-					total_csums);
+					extent_len);
 		btrfs_release_path(csum_path);
 		if (ret) {
 			error("Error looking up checsum\n");
