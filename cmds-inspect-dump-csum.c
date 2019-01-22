@@ -36,28 +36,140 @@
 
 #ifdef DEBUG
 #define pr_debug(fmt, ...) printf(fmt, __VA_ARGS__)
+static void hexdump(void *data, size_t size)
+{
+	char ascii[17];
+	size_t i, j;
+	ascii[16] = '\0';
+
+	for (i = 0; i < size; ++i) {
+		if ((i % 16) == 0)
+			printf("%04lx: ", i);
+		printf("%02x ", ((unsigned char*)data)[i]);
+		if (((unsigned char*)data)[i] >= ' '
+		    && ((unsigned char*)data)[i] <= '~') {
+			ascii[i % 16] = ((unsigned char*)data)[i];
+		} else {
+			ascii[i % 16] = '.';
+		}
+
+		if ((i+1) % 8 == 0 || i+1 == size) {
+			printf(" ");
+			if ((i+1) % 16 == 0) {
+				printf("|  %s \n", ascii);
+			} else if (i+1 == size) {
+				ascii[(i+1) % 16] = '\0';
+				if ((i+1) % 16 <= 8) {
+					printf(" ");
+				}
+				for (j = (i+1) % 16; j < 16; ++j) {
+					printf("   ");
+				}
+				printf("|  %s \n", ascii);
+			}
+		}
+	}
+}
 #else
 #define pr_debug(fmt, ...) do {} while (0)
+static inline void hexdump(void *data, size_t size) { }
 #endif
 
 static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 			     u64 bytenr, u64 extent_len)
 {
 	struct btrfs_key key;
+	int pending_csums;
+	int total_csums;
+	u16 csum_size;
 	int ret;
 
 	key.objectid = BTRFS_EXTENT_CSUM_OBJECTID;
 	key.offset = bytenr;
 	key.type = BTRFS_EXTENT_CSUM_KEY;
 
+	csum_size = btrfs_super_csum_size(root->fs_info->super_copy);
+
 	ret = btrfs_search_slot(NULL, root, &key, path, 0, 0);
-	if (ret < 0)
-		goto fail;
+	if (ret < 0) {
+		goto out;
+	} else if (ret > 0) {
+		if (path->slots[0] == 0) {
+			ret = -ENOENT;
+			goto out;
+		} else {
+			path->slots[0]--;
+		}
+	}
 
-fail:
-	error("failed to lookup checksums for extent at %llu", bytenr);
+	pending_csums = total_csums = extent_len / 4096;
 
-	return 0;
+	ret = -EINVAL;
+	while (pending_csums) {
+		struct extent_buffer *leaf;
+		struct btrfs_key found_key;
+		struct btrfs_csum_item *ci;
+		u32 item_size;
+		int nr_csums;
+		u32 offset;
+		int slot;
+		u8 *buf;
+		int i;
+
+		leaf = path->nodes[0];
+		slot = path->slots[0];
+
+		btrfs_item_key_to_cpu(leaf, &found_key, slot);
+		if (found_key.type != BTRFS_EXTENT_CSUM_KEY)
+			goto out;
+
+		item_size = btrfs_item_size_nr(leaf, slot);
+		offset = btrfs_item_offset_nr(leaf, slot);
+		nr_csums = item_size / 4;
+
+		buf = calloc(sizeof(u8), nr_csums);
+		if (!buf) {
+			ret = -ENOMEM;
+			break;
+		}
+
+		pr_debug("%s: item_size: %d, offset: %d\n",
+		       __func__, item_size, offset);
+		read_extent_buffer(leaf, buf, offset, item_size);
+		hexdump(buf, item_size);
+
+		if (pending_csums < nr_csums) {
+			pr_debug("btrfs_csum_item contains csums for more than one extent, %d - %d\n",
+			       item_size / csum_size, pending_csums);
+			for (i = 0; i < pending_csums; i++) {
+				u32 pos = i * sizeof(struct btrfs_csum_item);
+
+				ci = (struct btrfs_csum_item *) buf + pos;
+				pr_debug("CSUM 0x%08x\n", (u32)ci->csum);
+			}
+			pending_csums = 0;
+		} else {
+			for (i = 0; i < nr_csums; i++) {
+				u32 pos = i * sizeof(struct btrfs_csum_item);
+
+				ci = (struct btrfs_csum_item *) buf + pos;
+				pr_debug("CSUM 0x%08x\n", (u32)ci->csum);
+			}
+			pending_csums -= nr_csums;
+		}
+
+		ret = btrfs_next_item(root, path);
+		if (ret > 0) {
+			ret = 0;
+			break;
+		}
+	}
+
+out:
+	if (ret)
+		error("failed to lookup checksums for extent at %llu", bytenr);
+
+	return ret;
 }
 
 static int btrfs_get_extent_csum(struct btrfs_root *root,
@@ -65,10 +177,7 @@ static int btrfs_get_extent_csum(struct btrfs_root *root,
 {
 	struct btrfs_fs_info *info = root->fs_info;
 	struct btrfs_key key;
-	u16 csum_size;
 	int ret;
-
-	csum_size = btrfs_super_csum_size(info->super_copy);
 
 	key.objectid = ino;
 	key.type = BTRFS_EXTENT_DATA_KEY;
