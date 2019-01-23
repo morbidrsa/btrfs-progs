@@ -113,7 +113,6 @@ static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 		int nr_csums;
 		u32 offset;
 		int slot;
-		u8 *buf;
 		int i;
 
 		leaf = path->nodes[0];
@@ -132,16 +131,8 @@ static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 		else
 			nr_csums = item_size / 4;
 
-		buf = calloc(sizeof(u8), nr_csums);
-		if (!buf) {
-			ret = -ENOMEM;
-			break;
-		}
-
 		pr_debug("%s: item_size: %d, offset: %d\n",
 		       __func__, item_size, offset);
-		read_extent_buffer(leaf, buf, offset, item_size);
-		hexdump(buf, item_size);
 
 		for (i = 0; i < nr_csums; i++) {
 			u32 csum;
