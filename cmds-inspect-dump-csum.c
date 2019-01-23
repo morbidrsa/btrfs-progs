@@ -123,9 +123,14 @@ static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 		if (found_key.type != BTRFS_EXTENT_CSUM_KEY)
 			goto out;
 
+		ci = btrfs_item_ptr(leaf, slot, struct btrfs_csum_item);
 		item_size = btrfs_item_size_nr(leaf, slot);
 		offset = btrfs_item_offset_nr(leaf, slot);
-		nr_csums = item_size / 4;
+
+		if (pending_csums < (item_size / 4))
+			nr_csums = pending_csums;
+		else
+			nr_csums = item_size / 4;
 
 		buf = calloc(sizeof(u8), nr_csums);
 		if (!buf) {
@@ -138,25 +143,16 @@ static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 		read_extent_buffer(leaf, buf, offset, item_size);
 		hexdump(buf, item_size);
 
-		if (pending_csums < nr_csums) {
-			pr_debug("btrfs_csum_item contains csums for more than one extent, %d - %d\n",
-			       item_size / csum_size, pending_csums);
-			for (i = 0; i < pending_csums; i++) {
-				u32 pos = i * sizeof(struct btrfs_csum_item);
+		for (i = 0; i < nr_csums; i++) {
+			u32 csum;
 
-				ci = (struct btrfs_csum_item *) buf + pos;
-				pr_debug("CSUM 0x%08x\n", (u32)ci->csum);
-			}
-			pending_csums = 0;
-		} else {
-			for (i = 0; i < nr_csums; i++) {
-				u32 pos = i * sizeof(struct btrfs_csum_item);
-
-				ci = (struct btrfs_csum_item *) buf + pos;
-				pr_debug("CSUM 0x%08x\n", (u32)ci->csum);
-			}
-			pending_csums -= nr_csums;
+			read_extent_buffer(leaf, &csum,
+					   (unsigned long) ci + i * 4,
+					   csum_size);
+			printf("CSUM: 0x%08x\n", csum);
 		}
+		pending_csums -= nr_csums;
+
 
 		ret = btrfs_next_item(root, path);
 		if (ret > 0) {
