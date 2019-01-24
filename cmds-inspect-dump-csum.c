@@ -96,8 +96,7 @@ static int btrfs_lookup_csum(struct btrfs_root *root, struct btrfs_path *path,
 		else
 			nr_csums = item_size / 4;
 
-		pr_debug("%s: item_size: %d, offset: %d\n",
-		       __func__, item_size, offset);
+		pr_debug("item_size: %d, offset: %d\n", item_size, offset);
 
 		for (i = 0; i < nr_csums; i++) {
 			u32 csum;
@@ -168,8 +167,7 @@ static int btrfs_get_extent_csum(struct btrfs_root *root,
 		extent_len = btrfs_file_extent_num_bytes(leaf, fi);
 		bytenr = btrfs_file_extent_disk_bytenr(leaf, fi);
 
-		pr_debug("%s: extent_len: %llu\n", __func__, extent_len);
-		pr_debug("%s: bytenr: %llu\n", __func__, bytenr);
+		pr_debug("extent start: %llu, len: %llu\n", bytenr, extent_len);
 
 		csum_path = btrfs_alloc_path();
 		ret = btrfs_lookup_csum(info->csum_root, csum_path, bytenr,
