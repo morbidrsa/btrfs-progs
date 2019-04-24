@@ -483,10 +483,10 @@ static int load_and_dump_sb(char *filename, int fd, u64 sb_bytenr, int full,
 
 	sb = (struct btrfs_super_block *)super_block_data;
 
-	ret = pread64(fd, super_block_data, BTRFS_SUPER_INFO_SIZE, sb_bytenr);
-	if (ret != BTRFS_SUPER_INFO_SIZE) {
+	ret = load_sb(fd, sb_bytenr, sb, BTRFS_SUPER_INFO_SIZE);
+	if (ret) {
 		/* check if the disk if too short for further superblock */
-		if (ret == 0 && errno == 0)
+		if (ret == -ENOSPC)
 			return 0;
 
 		error("failed to read the superblock on %s at %llu",

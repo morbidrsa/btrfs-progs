@@ -171,6 +171,8 @@ unsigned long total_memory(void);
 void print_device_info(struct btrfs_device *device, char *prefix);
 void print_all_devices(struct list_head *devices);
 
+int load_sb(int fd, u64 bytenr, struct btrfs_super_block *sb, size_t size);
+
 /*
  * Global program state, configurable by command line and available to
  * functions without extra context passing.

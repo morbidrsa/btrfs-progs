@@ -2593,3 +2593,17 @@ void print_all_devices(struct list_head *devices)
 		print_device_info(dev, "\t");
 	printf("\n");
 }
+
+int load_sb(int fd, u64 bytenr, struct btrfs_super_block *sb, size_t size)
+{
+	int ret;
+
+	ret = pread64(fd, sb, size, bytenr);
+	if (ret != size) {
+		if (ret == 0 && errno == 0)
+			return -EINVAL;
+
+		return -errno;
+	}
+	return 0;
+}
