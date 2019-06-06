@@ -165,10 +165,18 @@ struct btrfs_free_space_ctl;
 #define BTRFS_CSUM_SIZE 32
 
 /* csum types */
-#define BTRFS_CSUM_TYPE_CRC32	0
+enum btrfs_csum_type {
+	BTRFS_CSUM_TYPE_CRC32	= 0,
+	BTRFS_CSUM_TYPE_XXHASH	= 1,
+};
 
-/* four bytes for CRC32 */
-static int btrfs_csum_sizes[] = { 4 };
+static struct btrfs_csum {
+	u16 size;
+	const char *name;
+} btrfs_csums[] = {
+	[BTRFS_CSUM_TYPE_CRC32] = { 4, "crc32c" },
+	[BTRFS_CSUM_TYPE_XXHASH] = { 8, "xxhash64" },
+};
 
 #define BTRFS_EMPTY_DIR_SIZE 0
 
@@ -2264,8 +2272,8 @@ BTRFS_SETGET_STACK_FUNCS(super_magic, struct btrfs_super_block, magic, 64);
 static inline int btrfs_super_csum_size(struct btrfs_super_block *s)
 {
 	int t = btrfs_super_csum_type(s);
-	BUG_ON(t >= ARRAY_SIZE(btrfs_csum_sizes));
-	return btrfs_csum_sizes[t];
+	BUG_ON(t >= ARRAY_SIZE(btrfs_csums));
+	return btrfs_csums[t].size;
 }
 
 static inline unsigned long btrfs_leaf_data(struct extent_buffer *l)
