@@ -473,16 +473,22 @@ prepare_test_dev()
 # $1-$n: optional, default is -f
 run_check_mkfs_test_dev()
 {
+	MKFS_ARGS="$@"
+
 	setup_root_helper
 
 	# check accidental files/devices passed
-	for opt in "$@"; do
+	for opt in "$MKFS_ARGS"; do
 		if [ -f "$opt" -o -b "$opt" ]; then
 			_fail "ERROR: unexpected option for run_check_mkfs_test_dev: device"
 		fi
 	done
 
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@" "$TEST_DEV"
+	if [ "$TEST_ENABLE_OVERRIDE" = 'true' ]; then
+		MKFS_ARGS="$TEST_ARGS_MKFS $MKFS_ARGS"
+	fi
+
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$MKFS_ARGS" "$TEST_DEV"
 }
 
 run_check_mount_test_dev()

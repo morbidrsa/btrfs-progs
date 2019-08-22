@@ -21,7 +21,13 @@ test_get_info()
 }
 test_do_mkfs()
 {
-	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$@"
+	MKFS_ARGS="$@"
+
+	if [ "$TEST_ENABLE_OVERRIDE" = 'true' ]; then
+		MKFS_ARGS="$TEST_ARGS_MKFS $MKFS_ARGS"
+	fi
+
+	run_check $SUDO_HELPER "$TOP/mkfs.btrfs" -f "$MKFS_ARGS"
 }
 
 test_mkfs_single()
