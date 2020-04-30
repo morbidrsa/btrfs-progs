@@ -9937,6 +9937,7 @@ static const char * const cmd_check_usage[] = {
 	"       --clear-space-cache v1|v2   clear space cache for v1 or v2",
 	"  check and reporting options:",
 	"       --check-data-csum           verify checksums of data blocks",
+	"       --auth-key                  key for authenticated file-system",
 	"       -Q|--qgroup-report          print a report on qgroup consistency",
 	"       -E|--subvol-extents <subvolid>",
 	"                                   print subvolume extents and sharing state",
@@ -9965,6 +9966,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 	int qgroup_report_ret;
 	unsigned ctree_flags = OPEN_CTREE_EXCLUSIVE;
 	int force = 0;
+	char *auth_key = NULL;
 
 	while(1) {
 		int c;
@@ -9972,7 +9974,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			GETOPT_VAL_INIT_EXTENT, GETOPT_VAL_CHECK_CSUM,
 			GETOPT_VAL_READONLY, GETOPT_VAL_CHUNK_TREE,
 			GETOPT_VAL_MODE, GETOPT_VAL_CLEAR_SPACE_CACHE,
-			GETOPT_VAL_FORCE };
+			GETOPT_VAL_FORCE, GETOPT_VAL_AUTH_KEY };
 		static const struct option long_options[] = {
 			{ "super", required_argument, NULL, 's' },
 			{ "repair", no_argument, NULL, GETOPT_VAL_REPAIR },
@@ -9995,6 +9997,8 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			{ "clear-space-cache", required_argument, NULL,
 				GETOPT_VAL_CLEAR_SPACE_CACHE},
 			{ "force", no_argument, NULL, GETOPT_VAL_FORCE },
+			{ "auth-key", required_argument, NULL,
+				GETOPT_VAL_AUTH_KEY },
 			{ NULL, 0, NULL, 0}
 		};
 
@@ -10082,6 +10086,9 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 			case GETOPT_VAL_FORCE:
 				force = 1;
 				break;
+			case GETOPT_VAL_AUTH_KEY:
+				auth_key = strdup(optarg);
+				break;
 		}
 	}
 
@@ -10162,7 +10169,7 @@ static int cmd_check(const struct cmd_struct *cmd, int argc, char **argv)
 		ctree_flags |= OPEN_CTREE_PARTIAL;
 
 	info = open_ctree_fs_info(argv[optind], bytenr, tree_root_bytenr,
-				  chunk_root_bytenr, ctree_flags, NULL);
+				  chunk_root_bytenr, ctree_flags, auth_key);
 	if (!info) {
 		error("cannot open file system");
 		ret = -EIO;
@@ -10507,6 +10514,8 @@ close_out:
 err_out:
 	if (ctx.progress_enabled)
 		task_deinit(ctx.info);
+
+	free(auth_key);
 
 	return err;
 }
